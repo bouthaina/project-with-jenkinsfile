@@ -1,0 +1,52 @@
+@page "/products/details/{Id:int}"
+@using ProductApp.Client.Models
+@using ProductApp.Client.Services
+@inject ProductService ProductService
+@inject NavigationManager NavigationManager
+
+<h1>Détails du produit</h1>
+
+@if (product == null)
+{
+    <p><em>Chargement...</em></p>
+}
+else
+{
+    <div class="card">
+        <div class="card-header">
+            <h3>@product.Name</h3>
+        </div>
+        <div class="card-body">
+            <p><strong>Description:</strong> @product.Description</p>
+            <p><strong>Prix:</strong> @product.Price.ToString("C")</p>
+            <p><strong>Catégorie:</strong> @product.Category</p>
+            <p><strong>Quantité en stock:</strong> @product.StockQuantity</p>
+           
+            
+        </div>
+        <div class="card-footer">
+            <a href="/products/edit/@product.Id" class="btn btn-warning">Modifier</a>
+            <a href="/products" class="btn btn-secondary">Retour à la liste</a>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Product product;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            product = await ProductService.GetProductAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors du chargement du produit: {ex.Message}");
+            NavigationManager.NavigateTo("/products");
+        }
+    }
+}

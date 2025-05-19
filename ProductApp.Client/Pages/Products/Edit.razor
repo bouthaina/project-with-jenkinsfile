@@ -1,0 +1,50 @@
+@page "/products/edit/{Id:int}"
+@using ProductApp.Client.Models
+@using ProductApp.Client.Services
+@inject ProductService ProductService
+@inject NavigationManager NavigationManager
+
+<h1>Modifier le produit</h1>
+
+@if (product == null)
+{
+    <p><em>Chargement...</em></p>
+}
+else
+{
+    <ProductForm Product="@product" OnValidSubmit="@HandleValidSubmit" />
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Product product;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            product = await ProductService.GetProductAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors du chargement du produit: {ex.Message}");
+            NavigationManager.NavigateTo("/products");
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            await ProductService.UpdateProductAsync(Id, product);
+            NavigationManager.NavigateTo("/products");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors de la mise à jour du produit: {ex.Message}");
+            // Gérer l'erreur
+        }
+    }
+}

@@ -1,0 +1,46 @@
+@using ProductApp.Client.Models
+
+<EditForm Model="@Product" OnValidSubmit="() => OnValidSubmit.InvokeAsync(Product)">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="name">Nom</label>
+        <InputText id="name" @bind-Value="Product.Name" class="form-control" />
+        <ValidationMessage For="@(() => Product.Name)" />
+    </div>
+
+    <div class="form-group">
+        <label for="description">Description</label>
+        <InputTextArea id="description" @bind-Value="Product.Description" class="form-control" rows="3" />
+        <ValidationMessage For="@(() => Product.Description)" />
+    </div>
+
+    <div class="form-group">
+        <label for="price">Prix</label>
+        <InputNumber id="price" @bind-Value="Product.Price" class="form-control" />
+        <ValidationMessage For="@(() => Product.Price)" />
+    </div>
+
+    <div class="form-group">
+        <label for="stockQuantity">Quantité en stock</label>
+        <InputNumber id="stockQuantity" @bind-Value="Product.StockQuantity" class="form-control" />
+        <ValidationMessage For="@(() => Product.StockQuantity)" />
+    </div>
+
+    <div class="form-group">
+        <label for="category">Catégorie</label>
+        <InputText id="category" @bind-Value="Product.Category" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Enregistrer</button>
+    <a href="/products" class="btn btn-secondary">Annuler</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public Product Product { get; set; } = new Product();
+
+    [Parameter]
+    public EventCallback<Product> OnValidSubmit { get; set; }
+}

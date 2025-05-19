@@ -1,0 +1,22 @@
+# Build results
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+
+# Rider
+.idea/
+
+# Others
+*.log
+*.cache
+*.db
+*.DS_Store
+.env
