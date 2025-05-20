@@ -1,0 +1,59 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'ProductApp.API/**'
+      - 'Dockerfile.backend'
+      - '.github/workflows/ci-backend.yml'
+
+jobs:
+
+
+  test:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: Setup dotnet  
+        uses: actions/setup-dotnet@v4
+        with:
+            dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        working-directory: ./ProductApp.API
+        run: dotnet restore
+
+      - name: Build
+        working-directory: ./ProductApp.API
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run tests
+        run: |
+          if [ -d "ProductApp.API.Tests" ]; then
+          echo "Running backend tests..."
+          dotnet test ProductApp.API.Tests/ProductApp.API.Tests.csproj --configuration Release --no-build
+          else
+          echo "No test project found for backend"
+          fi
+
+
+      - name: Generate test report
+        uses: dorny/test-reporter@v1
+        if: always()  
+        with:
+          name: Backend Tests
+          path: 'TestResults/*.trx'
+          reporter: dotnet-trx
+          fail-on-error: false
+
+
+      - name: upload Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-results
+          path: TestResults

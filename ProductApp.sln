@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductApp.Client", "Produc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductApp.API", "ProductApp.API\ProductApp.API.csproj", "{40E7926E-E93E-416A-AE97-55B5DA41DCDD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductApp.API.Tests", "ProductApp.API.Tests\ProductApp.API.Tests.csproj", "{C2D423E8-DDBE-42B6-92B4-4F1D8128DBA2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductApp.Client.Tests", "ProductApp.Client.Tests\ProductApp.Client.Tests.csproj", "{74ABAF61-74B7-4571-92BF-CE73AF1EEDDE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +28,13 @@ Global
 		{40E7926E-E93E-416A-AE97-55B5DA41DCDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{40E7926E-E93E-416A-AE97-55B5DA41DCDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{40E7926E-E93E-416A-AE97-55B5DA41DCDD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2D423E8-DDBE-42B6-92B4-4F1D8128DBA2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2D423E8-DDBE-42B6-92B4-4F1D8128DBA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2D423E8-DDBE-42B6-92B4-4F1D8128DBA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2D423E8-DDBE-42B6-92B4-4F1D8128DBA2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{74ABAF61-74B7-4571-92BF-CE73AF1EEDDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74ABAF61-74B7-4571-92BF-CE73AF1EEDDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74ABAF61-74B7-4571-92BF-CE73AF1EEDDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74ABAF61-74B7-4571-92BF-CE73AF1EEDDE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
