@@ -14,6 +14,11 @@ jobs:
   test:
     name: Test Backend
     runs-on: ubuntu-latest
+
+    permissions:
+      checks: write
+      contents: read
+
     steps:
       - name: checkout
         uses: actions/checkout@v4
