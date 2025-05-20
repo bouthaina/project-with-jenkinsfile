@@ -1,0 +1,44 @@
+# Dockerfile pour le backend ASP.NET Core Web API
+
+# Étape de build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copier les fichiers csproj et restaurer les dépendances
+COPY ["ProductApp.API/ProductApp.API.csproj", "ProductApp.API/"]
+RUN dotnet restore "ProductApp.API/ProductApp.API.csproj"
+
+# Copier le reste du code et construire l'application
+COPY ["ProductApp.API/", "ProductApp.API/"]
+WORKDIR "/src/ProductApp.API"
+RUN dotnet build "ProductApp.API.csproj" -c Release -o /app/build
+
+# Étape de publication
+FROM build AS publish
+RUN dotnet publish "ProductApp.API.csproj" -c Release -o /app/publish
+
+# Étape finale
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+
+# Exposer le port 80
+#EXPOSE 80
+
+# Script d'attente pour PostgreSQL et démarrage de l'application
+RUN apt-get update && apt-get install -y postgresql-client
+
+# Créer un script d'entrée pour attendre que PostgreSQL soit prêt
+RUN echo '#!/bin/bash \n\
+echo "Waiting for PostgreSQL..." \n\
+until PGPASSWORD=$DB_PASSWORD psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -c "\\q"; do \n\
+  >&2 echo "PostgreSQL is unavailable - sleeping" \n\
+  sleep 1 \n\
+done \n\
+echo "PostgreSQL is up - executing migrations" \n\
+dotnet ProductApp.API.dll \n\
+' > /app/entrypoint.sh
+
+RUN chmod +x /app/entrypoint.sh
+
+ENTRYPOINT ["/app/entrypoint.sh"]
