@@ -23,6 +23,14 @@ jobs:
         with:
             dotnet-version: '8.0.x'
 
+      - name: Verify project structure
+        run: |
+          echo "Current directory: $(pwd)"
+          ls -la
+          if [ -d "ProductApp.API.Tests" ]; then
+            ls -la ProductApp.API.Tests/
+          fi
+
       - name: Restore dependencies
         working-directory: ./ProductApp.API
         run: dotnet restore
@@ -32,12 +40,19 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Run tests
+        working-directory: ./ProductApp.API
         run: |
-          if [ -d "ProductApp.API.Tests" ]; then
+          if [ -f "../ProductApp.API.Tests/ProductApp.API.Tests.csproj" ]; then
             echo "Running backend tests..."
-            dotnet test ProductApp.API.Tests/ProductApp.API.Tests.csproj --configuration Release --no-build --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
+            dotnet test ../ProductApp.API.Tests/ProductApp.API.Tests.csproj \
+              --configuration Release \
+              --no-build \
+              --logger "trx;LogFileName=test-results.trx" \
+              --collect:"XPlat Code Coverage" \
+              --results-directory ./TestResults
           else
-            echo "No test project found for backend"
+            echo "::warning::Test project not found at ../ProductApp.API.Tests/ProductApp.API.Tests.csproj"
+            exit 0
           fi
 
 
@@ -46,7 +61,7 @@ jobs:
         if: always()  
         with:
           name: Backend Tests
-          path: 'TestResults/*.trx'
+          path: 'ProductApp.API/TestResults/*.trx'
           reporter: dotnet-trx
           fail-on-error: false
 
@@ -56,4 +71,5 @@ jobs:
         if: always()
         with:
           name: backend-test-results
-          path: TestResults
+          path: |
+            ProductApp.API/TestResults/*
