@@ -40,7 +40,7 @@ jobs:
       - name: Run tests
         run: |
           if [ -d "ProductApp.API.Tests" ]; then
-            dotnet test ProductApp.API.Tests/ProductApp.API.Tests.csproj --configuration Release --no-build --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
+            dotnet test ProductApp.API.Tests/ProductApp.API.Tests.csproj --configuration Release --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage" --results-directory ./TestResults
           else
             echo "No test project found for backend"
           fi
