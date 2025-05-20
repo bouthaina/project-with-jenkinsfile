@@ -8,6 +8,11 @@ on:
       - 'Dockerfile.backend'
       - '.github/workflows/ci-backend.yml'
 
+
+env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+
 jobs:
 
 
@@ -41,21 +46,26 @@ jobs:
           else
             echo "No test project found for backend"
           fi
-
-
-      - name: Generate test report
-        uses: dorny/test-reporter@v1
-        if: always()  
-        with:
-          name: Backend Tests
-          path: 'TestResults/*.trx'
-          reporter: dotnet-trx
-          fail-on-error: false
-
-
+    
       - name: upload Artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: backend-test-results
           path: TestResults
+
+      - name: Notify Slack about test status 
+        uses: act10ns/slack@v2
+        if: always()
+        with:
+          status: ${{ job.status }}
+          steps: ${{ toJson(steps) }}    
+          message: >
+                ${{ job.status == 'success' && ':white_check_mark: Tests PASSED' || ':x: Tests FAILED' }}
+                *Workflow*: ${{ github.workflow }}
+                *Repository*: <https://github.com/${{ github.repository }}|${{ github.repository }}>
+                *Branch*: ${{ github.ref }}
+                *Commit*: <https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{
+                github.sha
+                }}>               
+                *Details*: <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>
