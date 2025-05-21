@@ -62,7 +62,6 @@ jobs:
                 *Details*: <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>
 
 
-
   build-and-push:    
              
         name: Build and Push Docker Image
