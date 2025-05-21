@@ -11,7 +11,7 @@ on:
 
 env:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      IMAGE_NAME: bouthainabakouch/image-backend-product
+      IMAGE_NAME: ${{ vars.DOCKERHUB_USERNAME }}/image-backend-product
       BUILD_NUMBER: ${{ github.run_number }}
 
 jobs:
@@ -94,10 +94,9 @@ jobs:
                  file: ./Dockerfile.backend
                  push: true
                  tags: |
-                    ${{ vars.DOCKERHUB_USERNAME }}/image-backend-product:${{ github.run_number }}
-                    ${{ vars.DOCKERHUB_USERNAME }}/image-backend-product:latest
-                    
-            
+                    ${{ env.IMAGE_NAME }}:${{ github.run_number }}
+                    ${{ env.IMAGE_NAME }}:latest
+                              
 
             - name: Notify Build Results
               if: always()
