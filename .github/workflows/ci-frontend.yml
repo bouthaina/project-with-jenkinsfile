@@ -39,7 +39,7 @@ jobs:
       - name: Run tests
         run: |
           if [ -d "ProductApp.Client.Tests" ]; then
-            dotnet test ProductApp.Client.Tests/ProductApp.Client.Tests.csproj --configuration Release --no-build
+            dotnet test ProductApp.Client.Tests/ProductApp.Client.Tests.csproj --configuration Release
           else
             echo "No test project found for frontend"
           fi
