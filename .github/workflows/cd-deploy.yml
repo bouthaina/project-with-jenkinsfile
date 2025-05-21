@@ -10,7 +10,6 @@ on:
 
   workflow_dispatch:
 
-
 jobs:
   
   deploy:
@@ -30,5 +29,3 @@ jobs:
           docker compose -f docker-compose.production.yml down
           docker compose -f docker-compose.production.yml pull
           docker compose -f docker-compose.production.yml up -d --build --force-recreate
-
-          
