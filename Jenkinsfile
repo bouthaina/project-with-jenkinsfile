@@ -9,75 +9,66 @@ pipeline {
     }
 
     stages {
-        stage('Test Backend') {
-            when {
-                expression { 
-                    def changedFiles = scm.changeSets.collect { it.items }.flatten().collect { it.path }
-                    return changedFiles.any { it.startsWith('ProductApp.API/') }
-                }
-            }
+        // Étape de debug pour voir les fichiers modifiés
+        stage('Debug Changes') {
             steps {
                 script {
-                    def testResultsDir = "TestResults_${env.BUILD_NUMBER}"
-                    
-                    dir('ProductApp.API') {
-                        // Étape 1: Vérification de l'environnement
-                        sh '''
-                            echo "=== ENVIRONMENT DEBUG ==="
-                            dotnet --version
-                            ls -la
-                            echo "========================"
-                        '''
-                        
-                        // Étape 2: Restauration et build avec gestion d'erreur
-                        try {
-                            sh 'dotnet restore'
-                            sh 'dotnet build --configuration Release --no-restore'
-                            
-                            // Étape 3: Exécution des tests avec journalisation détaillée
-                            sh """
-                                mkdir -p ../${testResultsDir}
-                                dotnet test --configuration Release \
-                                    --logger "trx;LogFileName=test-results.trx" \
-                                    --collect:"XPlat Code Coverage" \
-                                    --results-directory ../${testResultsDir} \
-                                    --verbosity detailed
-                            """
-                        } catch (Exception ex) {
-                            slackSend(
-                                color: 'danger',
-                                message: """
-                                    :x: Backend Tests FAILED
-                                    *Job*: ${env.JOB_NAME} #${env.BUILD_NUMBER}
-                                    *Commit*: ${env.GIT_COMMIT.take(8)}
-                                    *Error*: ${ex.toString()}
-                                    *URL*: ${env.BUILD_URL}
-                                """
-                            )
-                            error("Tests failed: ${ex.getMessage()}")
-                        }
-                    }
-                    
-                    // Archive des résultats même en cas d'échec
-                    junit allowEmptyResults: true, testResults: "${testResultsDir}/*.trx"
-                    archiveArtifacts artifacts: "${testResultsDir}/**/*", allowEmptyArchive: true
-                }
-            }
-            post {
-                success {
-                    slackSend(
-                        color: 'good',
-                        message: """
-                            :white_check_mark: Backend Tests PASSED
-                            *Job*: ${env.JOB_NAME} #${env.BUILD_NUMBER}
-                            *Commit*: ${env.GIT_COMMIT.take(8)}
-                            *URL*: ${env.BUILD_URL}
-                        """
-                    )
+                    def changes = scm.changeSets.collect { it.items }.flatten().collect { it.path }
+                    echo "Changed files: ${changes}"
+                    echo "Build reason: ${currentBuild.buildCauses}"
                 }
             }
         }
 
-        // ... [les autres stages restent inchangés]
+        // Backend - Version améliorée de la condition when
+        stage('Test Backend') {
+            when {
+                anyOf {
+                    changeset 'ProductApp.API/**'
+                    expression { params.FORCE_RUN == true }
+                    buildingTag()
+                }
+            }
+            steps {
+                script {
+                    dir('ProductApp.API') {
+                        sh 'dotnet restore'
+                        sh 'dotnet build --configuration Release'
+                        sh 'dotnet test --configuration Release --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage"'
+                    }
+                }
+            }
+            post {
+                always {
+                    junit '**/TestResults/*.trx'
+                    archiveArtifacts artifacts: '**/TestResults/**', allowEmptyArchive: true
+                }
+            }
+        }
+
+        // Autres étapes avec la même logique conditionnelle améliorée
+        stage('Build Backend Docker') {
+            when {
+                anyOf {
+                    changeset 'ProductApp.API/**'
+                    expression { params.FORCE_RUN == true }
+                    buildingTag()
+                }
+                expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
+            }
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-creds') {
+                        docker.build("${env.IMAGE_NAME_BACKEND}:${env.BUILD_NUMBER}", "-f Dockerfile.backend .").push()
+                    }
+                }
+            }
+        }
+
+        // ... [appliquer la même logique aux étapes frontend]
+    }
+
+    parameters {
+        booleanParam(name: 'FORCE_RUN', defaultValue: false, description: 'Forcer l\'exécution complète du pipeline')
     }
 }
