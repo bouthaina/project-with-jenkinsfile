@@ -22,7 +22,7 @@ pipeline {
             steps {
                 echo 'Construction du backend...'
                 // Utilise l'outil dotnet configuré dans Jenkins ou disponible sur l'agent
-                sh 'dotnet build ProductApp.API/ProductApp.API.csproj --configuration Release'
+                bat 'dotnet build ProductApp.API/ProductApp.API.csproj --configuration Release'
             }
         }
 
@@ -30,7 +30,7 @@ pipeline {
             steps {
                 echo 'Tests du backend...'
                 // Exécute les tests s'ils existent
-                sh '''
+                bat '''
                 if [ -d "ProductApp.API.Tests" ]; then
                     dotnet test ProductApp.API.Tests/ProductApp.API.Tests.csproj --configuration Release --logger "trx;LogFileName=backend-test-results.trx" --results-directory ./TestResults/Backend
                 else
@@ -38,6 +38,7 @@ pipeline {
                 fi
                 '''
             }
+
             // Publier les résultats des tests
             post {
                 always {
@@ -49,7 +50,7 @@ pipeline {
         stage('Build Frontend') {
             steps {
                 echo 'Construction du frontend...'
-                sh 'dotnet build ProductApp.Client/ProductApp.Client.csproj --configuration Release'
+                bat 'dotnet build ProductApp.Client/ProductApp.Client.csproj --configuration Release'
             }
         }
 
@@ -57,7 +58,7 @@ pipeline {
             steps {
                 echo 'Tests du frontend...'
                 // Exécute les tests s'ils existent
-                sh '''
+                bat '''
                 if [ -d "ProductApp.Client.Tests" ]; then
                     dotnet test ProductApp.Client.Tests/ProductApp.Client.Tests.csproj --configuration Release --logger "trx;LogFileName=frontend-test-results.trx" --results-directory ./TestResults/Frontend
                 else
@@ -77,8 +78,8 @@ pipeline {
             steps {
                 echo 'Construction des images Docker...'
                 // Assurez-vous que Docker est accessible par Jenkins
-                sh "docker build -t ${env.BACKEND_IMAGE_NAME}:latest -f Dockerfile.backend ."
-                sh "docker build -t ${env.FRONTEND_IMAGE_NAME}:latest -f Dockerfile.frontend ."
+                bat "docker build -t ${env.BACKEND_IMAGE_NAME}:latest -f Dockerfile.backend ."
+                bat "docker build -t ${env.FRONTEND_IMAGE_NAME}:latest -f Dockerfile.frontend ."
             }
         }
 
@@ -91,14 +92,14 @@ pipeline {
             steps {
                 echo 'Push des images vers Docker Hub...'
                 withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh "echo ${env.DOCKER_PASS} | docker login -u ${env.DOCKER_USER} --password-stdin"
-                    sh "docker push ${env.BACKEND_IMAGE_NAME}:latest"
-                    sh "docker push ${env.FRONTEND_IMAGE_NAME}:latest"
+                    bat "echo ${env.DOCKER_PASS} | docker login -u ${env.DOCKER_USER} --password-stdin"
+                    bat "docker push ${env.BACKEND_IMAGE_NAME}:latest"
+                    bat "docker push ${env.FRONTEND_IMAGE_NAME}:latest"
                 }
             }
             post {
                 always {
-                    sh 'docker logout'
+                    sbat 'docker logout'
                 }
             }
             
