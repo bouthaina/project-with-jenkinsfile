@@ -82,25 +82,36 @@ pipeline {
                 bat "docker build -t ${env.FRONTEND_IMAGE_NAME}:latest -f Dockerfile.frontend ."
             }
         }
+
+
         stage('Push Docker Images') {
             when {
-                branch 'main'
-            }
-            steps {
-                script {
-                    echo 'Push des images vers Docker Hub (branche main détectée)...'
-                    withCredentials([usernamePassword(
-                        credentialsId: env.DOCKERHUB_CREDENTIALS_ID, 
-                        usernameVariable: 'DOCKER_USER', 
-                        passwordVariable: 'DOCKER_PASS'
-                    )]) {
-                        bat "echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin"
-                        bat "docker push ${env.BACKEND_IMAGE_NAME}:latest"
-                        bat "docker push ${env.FRONTEND_IMAGE_NAME}:latest"
-                    }
+            // Temporairement désactivé pour debug
+                expression { true }
+        }
+        steps {
+            // ... étapes de push ...
+                echo 'Push des images vers Docker Hub...'
+                withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    bat "echo ${env.DOCKER_PASS} | docker login -u ${env.DOCKER_USER} --password-stdin"
+                    bat "docker push ${env.BACKEND_IMAGE_NAME}:latest"
+                    bat "docker push ${env.FRONTEND_IMAGE_NAME}:latest"
                 }
             }
+        post {
+            always {
+                bat 'docker logout'
+            }
         }
+
+
+
+
+        }
+    }
+
+
+
 
 
 
