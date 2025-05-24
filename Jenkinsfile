@@ -82,35 +82,27 @@ pipeline {
                 bat "docker build -t ${env.FRONTEND_IMAGE_NAME}:latest -f Dockerfile.frontend ."
             }
         }
-
-
-        stage('Push Docker Images') {
+        tage('Push Docker Images') {
+            when {
+                branch 'main'
+            }
             steps {
                 script {
-            // Exécute une commande git pour obtenir le nom de la branche actuelle
-                    def currentBranch = bat(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
-                    echo "Branche détectée via git: ${currentBranch}"
-
-                    // Vérifie si la branche est 'main'
-                    if (currentBranch == 'main') {
-                        echo 'Push des images vers Docker Hub (branche main détectée)...'
-                        withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                            bat "echo ${env.DOCKER_PASS} | docker login -u ${env.DOCKER_USER} --password-stdin"
-                            bat "docker push ${env.BACKEND_IMAGE_NAME}:latest"
-                            bat "docker push ${env.FRONTEND_IMAGE_NAME}:latest"
-                        }
-                    } else {
-                        echo "Étape de push sautée car la branche actuelle (${currentBranch}) n'est pas 'main'."
+                    echo 'Push des images vers Docker Hub (branche main détectée)...'
+                    withCredentials([usernamePassword(
+                        credentialsId: env.DOCKERHUB_CREDENTIALS_ID, 
+                        usernameVariable: 'DOCKER_USER', 
+                        passwordVariable: 'DOCKER_PASS'
+                    )]) {
+                        bat "echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin"
+                        bat "docker push ${env.BACKEND_IMAGE_NAME}:latest"
+                        bat "docker push ${env.FRONTEND_IMAGE_NAME}:latest"
                     }
                 }
             }
-            post {
-                always {
-                    // Le logout peut être fait indépendamment de la branche
-                    bat 'docker logout'
-                }
-            }
-}
+        }
+
+
 
 }
 
