@@ -88,8 +88,8 @@ pipeline {
             when {
             // Temporairement désactivé pour debug
                 expression { true }
-        }
-        steps {
+            }
+            steps {
             // ... étapes de push ...
                 echo 'Push des images vers Docker Hub...'
                 withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
@@ -98,11 +98,11 @@ pipeline {
                     bat "docker push ${env.FRONTEND_IMAGE_NAME}:latest"
                 }
             }
-        post {
-            always {
-                bat 'docker logout'
+            post {
+                always {
+                    bat 'docker logout'
+                }
             }
-        }
 
 
 
