@@ -83,6 +83,12 @@ pipeline {
             }
         }
 
+        stage('Debug Branch Name') {
+            steps {
+                echo "Current branch detected by Jenkins: ${env.BRANCH_NAME}"
+            }
+        }
+
         stage('Push Docker Images') {
             // Cette étape est optionnelle, décommentez si vous voulez pousser vers Docker Hub
 
