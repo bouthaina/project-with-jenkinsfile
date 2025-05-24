@@ -86,16 +86,18 @@ pipeline {
 
         stage('Push Docker Images') {
             when {
-            // Temporairement désactivé pour debug
-                expression { true }
+                expression { true } // Temporairement désactivé pour debug
             }
             steps {
-            // ... étapes de push ...
                 echo 'Push des images vers Docker Hub...'
-                withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    bat "echo ${env.DOCKER_PASS} | docker login -u ${env.DOCKER_USER} --password-stdin"
-                    bat "docker push ${env.BACKEND_IMAGE_NAME}:latest"
-                    bat "docker push ${env.FRONTEND_IMAGE_NAME}:latest"
+                withCredentials([usernamePassword(
+                    credentialsId: env.DOCKERHUB_CREDENTIALS_ID,
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    bat 'echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin'
+                    bat "docker push %BACKEND_IMAGE_NAME%:latest"
+                    bat "docker push %FRONTEND_IMAGE_NAME%:latest"
                 }
             }
             post {
@@ -103,19 +105,8 @@ pipeline {
                     bat 'docker logout'
                 }
             }
-
-
-
-
         }
-    }
-
-
-
-
-
-
-}
+    } 
 
     post {
         // Actions à exécuter à la fin du pipeline (succès, échec, etc.)
