@@ -86,7 +86,11 @@ pipeline {
 
         stage('Push Docker Images') {
             when {
-                expression { true } // Temporairement désactivé pour debug
+                expression { 
+                    env.GIT_BRANCH == 'origin/main' || 
+                    env.BRANCH_NAME == 'main' ||
+                    (env.CHANGE_TARGET == 'main' && env.CHANGE_ID) 
+                }
             }
             steps {
                 echo 'Push des images vers Docker Hub...'
