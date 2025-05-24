@@ -7,6 +7,7 @@ pipeline {
         DOCKERHUB_USERNAME = 'bouthainabakouch' // Votre nom d'utilisateur Docker Hub
         BACKEND_IMAGE_NAME = "${env.DOCKERHUB_USERNAME}/image-backend-product"
         FRONTEND_IMAGE_NAME = "${env.DOCKERHUB_USERNAME}/image-frontend-product"
+        //SLACK_WEBHOOK_URL = 'SLACK_WEBHOOK_URL'
     }
 
     stages {
@@ -104,13 +105,45 @@ pipeline {
                     bat "docker push %FRONTEND_IMAGE_NAME%:latest"
                 }
             }
+        
+        
             post {
+
                 always {
                     bat 'docker logout'
                 }
-            }
+                success {
+                    script {
+                        withCredentials([string(credentialsId: 'SLACK_WEBHOOK_URL', variable: 'SLACK_WEBHOOK')]) {
+                            def payload = """
+                            {
+                                "text": ":white_check_mark: *Docker Push réussi !*\\n*Backend:* ${BACKEND_IMAGE_NAME}:latest\\n*Frontend:* ${FRONTEND_IMAGE_NAME}:latest\\n<${env.BUILD_URL}|Voir le build>"
+                            }
+                            """
+                            writeFile file: 'slack-success.json', text: payload
+                            bat "curl -X POST -H \"Content-type: application/json\" --data @slack-success.json %SLACK_WEBHOOK%"
+                        }
+                    }
+                }
+                failure {
+                    script {
+                        withCredentials([string(credentialsId: 'SLACK_WEBHOOK_URL', variable: 'SLACK_WEBHOOK')]) {
+                            def payload = """
+                            {
+                                "text": ":x: *Échec du push Docker !*\\nJob: ${env.JOB_NAME} #${env.BUILD_NUMBER}\\n<${env.BUILD_URL}|Voir le build>"
+                            }
+                            """
+                            writeFile file: 'slack-failure.json', text: payload
+                            bat "curl -X POST -H \"Content-type: application/json\" --data @slack-failure.json %SLACK_WEBHOOK%"
+                        }
+                    }
+                }
+                
         }
     } 
+
+}
+
 
     post {
         // Actions à exécuter à la fin du pipeline (succès, échec, etc.)
