@@ -82,7 +82,7 @@ pipeline {
                 bat "docker build -t ${env.FRONTEND_IMAGE_NAME}:latest -f Dockerfile.frontend ."
             }
         }
-        tage('Push Docker Images') {
+        stage('Push Docker Images') {
             when {
                 branch 'main'
             }
