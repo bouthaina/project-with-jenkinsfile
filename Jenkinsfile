@@ -1,74 +1,126 @@
 pipeline {
-    agent any
+    agent any // Exécute sur n'importe quel agent disponible (peut être Jenkins lui-même)
 
     environment {
-        SLACK_WEBHOOK_URL = credentials('SLACK_WEBHOOK_URL')
-        DOCKERHUB_CREDS = credentials('DOCKERHUB_CREDS')
-        IMAGE_NAME_BACKEND = "${env.DOCKERHUB_USERNAME}/image-backend-product"
-        IMAGE_NAME_FRONTEND = "${env.DOCKERHUB_USERNAME}/image-frontend-product"
+        // Définir le nom de votre compte Docker Hub
+        DOCKERHUB_CREDENTIALS_ID = 'DOCKERHUB_CREDS' // L'ID des credentials Jenkins pour Docker Hub
+        DOCKERHUB_USERNAME = 'bouthainabakouch' // Votre nom d'utilisateur Docker Hub
+        BACKEND_IMAGE_NAME = "${env.DOCKERHUB_USERNAME}/image-backend-product"
+        FRONTEND_IMAGE_NAME = "${env.DOCKERHUB_USERNAME}/image-frontend-product"
     }
 
     stages {
-        // Étape de debug pour voir les fichiers modifiés
-        stage('Debug Changes') {
+        stage('Checkout') {
             steps {
-                script {
-                    def changes = scm.changeSets.collect { it.items }.flatten().collect { it.path }
-                    echo "Changed files: ${changes}"
-                    echo "Build reason: ${currentBuild.buildCauses}"
+                echo 'Récupération du code...'
+                // Récupère le code depuis le dépôt configuré dans le job Jenkins
+                checkout scm
+            }
+        }
+
+        stage('Build Backend') {
+            steps {
+                echo 'Construction du backend...'
+                // Utilise l'outil dotnet configuré dans Jenkins ou disponible sur l'agent
+                sh 'dotnet build ProductApp.API/ProductApp.API.csproj --configuration Release'
+            }
+        }
+
+        stage('Test Backend') {
+            steps {
+                echo 'Tests du backend...'
+                // Exécute les tests s'ils existent
+                sh '''
+                if [ -d "ProductApp.API.Tests" ]; then
+                    dotnet test ProductApp.API.Tests/ProductApp.API.Tests.csproj --configuration Release --logger "trx;LogFileName=backend-test-results.trx" --results-directory ./TestResults/Backend
+                else
+                    echo "Pas de projet de test trouvé pour le backend"
+                fi
+                '''
+            }
+            // Publier les résultats des tests
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: 'TestResults/Backend/*.trx'
                 }
             }
         }
 
-        // Backend - Version améliorée de la condition when
-        stage('Test Backend') {
-            when {
-                anyOf {
-                    changeset 'ProductApp.API/**'
-                    expression { params.FORCE_RUN == true }
-                    buildingTag()
+        stage('Build Frontend') {
+            steps {
+                echo 'Construction du frontend...'
+                sh 'dotnet build ProductApp.Client/ProductApp.Client.csproj --configuration Release'
+            }
+        }
+
+        stage('Test Frontend') {
+            steps {
+                echo 'Tests du frontend...'
+                // Exécute les tests s'ils existent
+                sh '''
+                if [ -d "ProductApp.Client.Tests" ]; then
+                    dotnet test ProductApp.Client.Tests/ProductApp.Client.Tests.csproj --configuration Release --logger "trx;LogFileName=frontend-test-results.trx" --results-directory ./TestResults/Frontend
+                else
+                    echo "Pas de projet de test trouvé pour le frontend"
+                fi
+                '''
+            }
+            // Publier les résultats des tests
+            post {
+                always {
+                    junit allowEmptyResults: true, testResults: 'TestResults/Frontend/*.trx'
                 }
             }
+        }
+
+        stage('Build Docker Images') {
             steps {
-                script {
-                    dir('ProductApp.API') {
-                        sh 'dotnet restore'
-                        sh 'dotnet build --configuration Release'
-                        sh 'dotnet test --configuration Release --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage"'
-                    }
+                echo 'Construction des images Docker...'
+                // Assurez-vous que Docker est accessible par Jenkins
+                sh "docker build -t ${env.BACKEND_IMAGE_NAME}:latest -f Dockerfile.backend ."
+                sh "docker build -t ${env.FRONTEND_IMAGE_NAME}:latest -f Dockerfile.frontend ."
+            }
+        }
+
+        stage('Push Docker Images') {
+            // Cette étape est optionnelle, décommentez si vous voulez pousser vers Docker Hub
+
+            when {
+                branch 'main' // Pousser uniquement depuis la branche main
+            }
+            steps {
+                echo 'Push des images vers Docker Hub...'
+                withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh "echo ${env.DOCKER_PASS} | docker login -u ${env.DOCKER_USER} --password-stdin"
+                    sh "docker push ${env.BACKEND_IMAGE_NAME}:latest"
+                    sh "docker push ${env.FRONTEND_IMAGE_NAME}:latest"
                 }
             }
             post {
                 always {
-                    junit '**/TestResults/*.trx'
-                    archiveArtifacts artifacts: '**/TestResults/**', allowEmptyArchive: true
+                    sh 'docker logout'
                 }
             }
+            
         }
 
-        // Autres étapes avec la même logique conditionnelle améliorée
-        stage('Build Backend Docker') {
-            when {
-                anyOf {
-                    changeset 'ProductApp.API/**'
-                    expression { params.FORCE_RUN == true }
-                    buildingTag()
-                }
-                expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
-            }
-            steps {
-                script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-creds') {
-                        docker.build("${env.IMAGE_NAME_BACKEND}:${env.BUILD_NUMBER}", "-f Dockerfile.backend .").push()
-                    }
-                }
-            }
-        }
-
-        // ... [appliquer la même logique aux étapes frontend]
+    
     }
 
-    parameters {
-        booleanParam(name: 'FORCE_RUN', defaultValue: false, description: 'Forcer l\'exécution complète du pipeline')
+    post {
+        // Actions à exécuter à la fin du pipeline (succès, échec, etc.)
+        always {
+            echo 'Pipeline terminé.'
+            // Nettoyage si nécessaire
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline réussi !'
+            // Envoyer une notification Slack ou email
+        }
+        failure {
+            echo 'Pipeline échoué !'
+            // Envoyer une notification Slack ou email
+        }
     }
 }
