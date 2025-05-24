@@ -31,11 +31,11 @@ pipeline {
                 echo 'Tests du backend...'
                 // Exécute les tests s'ils existent
                 bat '''
-                if [ -d "ProductApp.API.Tests" ]; then
-                    dotnet test ProductApp.API.Tests/ProductApp.API.Tests.csproj --configuration Release --logger "trx;LogFileName=backend-test-results.trx" --results-directory ./TestResults/Backend
-                else
+                IF EXIST "ProductApp.API.Tests" (
+                    dotnet test ProductApp.API.Tests/ProductApp.API.Tests.csproj --configuration Release --logger "trx;LogFileName=backend-test-results.trx" --results-directory .\\TestResults\\Backend
+                ) ELSE (
                     echo "Pas de projet de test trouvé pour le backend"
-                fi
+                )
                 '''
             }
 
@@ -59,11 +59,11 @@ pipeline {
                 echo 'Tests du frontend...'
                 // Exécute les tests s'ils existent
                 bat '''
-                if [ -d "ProductApp.Client.Tests" ]; then
-                    dotnet test ProductApp.Client.Tests/ProductApp.Client.Tests.csproj --configuration Release --logger "trx;LogFileName=frontend-test-results.trx" --results-directory ./TestResults/Frontend
-                else
+                IF EXIST "ProductApp.Client.Tests" (
+                    dotnet test ProductApp.Client.Tests/ProductApp.Client.Tests.csproj --configuration Release --logger "trx;LogFileName=frontend-test-results.trx" --results-directory .\\TestResults\\Frontend
+                ) ELSE (
                     echo "Pas de projet de test trouvé pour le frontend"
-                fi
+                )
                 '''
             }
             // Publier les résultats des tests
@@ -99,7 +99,7 @@ pipeline {
             }
             post {
                 always {
-                    sbat 'docker logout'
+                    bat 'docker logout'
                 }
             }
             
